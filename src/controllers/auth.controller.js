@@ -5,16 +5,14 @@ const { validationResult } = require("express-validator");
 
 const generateToken = require("../utils/generateToken");
 const sendVerificationEmail = require("../utils/sendVerificationMail");
+const isProduction = process.env.NODE_ENV === "production";
 
 const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
     const user = await User.findOne({
-      $or: [
-        { username: identifier },
-        { email: identifier.toLowerCase() },
-      ],
+      $or: [{ username: identifier }, { email: identifier.toLowerCase() }],
     });
 
     if (!user) {
@@ -44,8 +42,8 @@ const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -82,10 +80,7 @@ const signup = async (req, res) => {
     }
 
     const existingUser = await User.findOne({
-      $or: [
-        { username },
-        { email: email.toLowerCase() },
-      ],
+      $or: [{ username }, { email: email.toLowerCase() }],
     });
 
     if (existingUser) {
@@ -214,10 +209,10 @@ const getCurrentUser = async (req, res) => {
 
 const logout = (req, res) => {
   res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "None" : "Lax",
+});
 
   return res.status(200).json({
     success: true,
