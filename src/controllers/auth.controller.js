@@ -79,31 +79,73 @@ const signup = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase();
+
     const existingUser = await User.findOne({
-      $or: [{ username }, { email: email.toLowerCase() }],
+      $or: [{ username }, { email: normalizedEmail }],
     });
 
     if (existingUser) {
-      if (existingUser.username === username) {
+      // VERIFIED ACCOUNT -> Reject
+      if (existingUser.isVerified) {
+        if (existingUser.email === normalizedEmail) {
+          return res.status(409).json({
+            success: false,
+            message: "Email already exists",
+          });
+        }
+
         return res.status(409).json({
           success: false,
           message: "Username already exists",
         });
       }
 
+      // UNVERIFIED ACCOUNT WITH SAME EMAIL -> Resend verification
+      if (existingUser.email === normalizedEmail) {
+        existingUser.username = username;
+        existingUser.password = await bcrypt.hash(password, 10);
+
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        existingUser.verificationToken = verificationToken;
+        existingUser.verificationTokenExpires = Date.now() + 60 * 60 * 1000;
+
+        await existingUser.save();
+
+        try {
+          await sendVerificationEmail(existingUser.email, verificationToken);
+        } catch (mailError) {
+          console.error("Email sending failed:", mailError);
+
+          return res.status(500).json({
+            success: false,
+            message: "Failed to send verification email. Please try again.",
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message:
+            "Your account already exists but isn't verified. We've sent you a new verification email.",
+        });
+      }
+
+      // USERNAME TAKEN BY AN UNVERIFIED ACCOUNT
       return res.status(409).json({
         success: false,
-        message: "Email already exists",
+        message: "Username is already reserved by another unverified account.",
       });
     }
 
+    // Create new account
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     const user = await User.create({
       username,
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
       isVerified: false,
       verificationToken,
@@ -209,10 +251,10 @@ const getCurrentUser = async (req, res) => {
 
 const logout = (req, res) => {
   res.clearCookie("token", {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "None" : "Lax",
-});
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
+  });
 
   return res.status(200).json({
     success: true,
