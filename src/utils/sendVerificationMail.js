@@ -1,78 +1,52 @@
-const nodemailer = require("nodemailer");
-const dns = require("dns");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  family: 4, // Force IPv4
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
-transporter.verify((error) => {
-  if (error) {
-    console.error("Mail transporter error:", error);
-  } else {
-    console.log("Mail transporter is ready.");
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendVerificationEmail = async (email, token) => {
-  const verificationLink = `${process.env.SERVER_URL}/api/auth/verify-email/${token}`;
+  const verificationLink = `${process.env.SERVER_URL}/api/auth/verify/${token}`;
 
-  await transporter.sendMail({
-    from: `"Complexell" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "Verify your Complexell account",
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;">
-        <h2>Welcome to Complexell 👋</h2>
+  try {
+    await resend.emails.send({
+      from: "Complexell <onboarding@resend.dev>",
+      to: email,
+      subject: "Verify your Complexell account",
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Welcome to Complexell 🚀</h2>
 
-        <p>Thank you for signing up.</p>
+          <p>Thanks for joining the beta.</p>
 
-        <p>Please verify your email by clicking the button below.</p>
+          <p>Click the button below to verify your email.</p>
 
-        <a
-          href="${verificationLink}"
-          style="
-            display:inline-block;
-            background:#9FE6A0;
-            color:#111111;
-            text-decoration:none;
-            padding:14px 24px;
-            border-radius:8px;
-            font-weight:bold;
-          "
-        >
-          Verify Email
-        </a>
+          <a
+            href="${verificationLink}"
+            style="
+              display:inline-block;
+              padding:12px 24px;
+              background:#9FE6A0;
+              color:#111;
+              text-decoration:none;
+              border-radius:8px;
+              font-weight:bold;
+            "
+          >
+            Verify Email
+          </a>
 
-        <p style="margin-top:25px;">
-          This verification link will expire in <b>1 hour</b>.
-        </p>
+          <p style="margin-top:20px;">
+            This link expires in <b>1 hour</b>.
+          </p>
 
-        <p>If you didn't create this account, you can safely ignore this email.</p>
+          <p>If you didn't create this account, simply ignore this email.</p>
+        </div>
+      `,
+    });
 
-        <hr>
-
-        <small>
-          If the button doesn't work, copy and paste this URL into your browser:
-        </small>
-
-        <br><br>
-
-        <a href="${verificationLink}">
-          ${verificationLink}
-        </a>
-      </div>
-    `,
-  });
+    console.log("Verification email sent.");
+  } catch (error) {
+    console.error("Resend Error:", error);
+    throw error;
+  }
 };
 
 module.exports = sendVerificationEmail;
