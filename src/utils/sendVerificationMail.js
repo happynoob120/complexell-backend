@@ -3,7 +3,7 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendVerificationEmail = async (email, token) => {
-  const verificationLink = `${process.env.SERVER_URL}/api/auth/verify/${token}`;
+  const verificationLink = `${process.env.SERVER_URL}/api/auth/verify-email/${token}`;
 
   try {
     await resend.emails.send({
