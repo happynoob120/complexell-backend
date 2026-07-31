@@ -7,7 +7,7 @@ const sendVerificationEmail = async (email, token) => {
 
   try {
     await resend.emails.send({
-      from: "Complexell <onboarding@resend.dev>",
+      from: "Complexell <noreply@souel.in>",
       to: email,
       subject: "Verify your Complexell account",
       html: `
