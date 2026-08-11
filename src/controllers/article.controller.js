@@ -63,20 +63,27 @@ const getArticles = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 6;
+    const q = req.query.q ? String(req.query.q).trim() : null;
 
     const skip = (page - 1) * limit;
 
-    const articles = await Article.find({
-      isPublished: true,
-    })
+    // Build query filter; support search over title and context when `q` provided
+    const filter = { isPublished: true };
+
+    if (q) {
+      filter.$or = [
+        { article_title: { $regex: q, $options: "i" } },
+        { article_context: { $regex: q, $options: "i" } },
+      ];
+    }
+
+    const articles = await Article.find(filter)
       .populate("author", "username")
       .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const totalArticles = await Article.countDocuments({
-      isPublished: true,
-    });
+    const totalArticles = await Article.countDocuments(filter);
 
     return res.status(200).json({
       success: true,

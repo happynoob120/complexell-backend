@@ -287,6 +287,15 @@ const verifyEmail = async (req, res) => {
 
     await user.save();
 
+    const authToken = generateToken(user._id);
+
+    res.cookie("token", authToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.redirect(`${process.env.CLIENT_URL}/verification-success`);
   } catch (error) {
     console.error(error);
