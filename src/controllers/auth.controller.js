@@ -69,7 +69,11 @@ const login = async (req, res) => {
 
 const signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role, isVerified } = req.body;
+
+    const requestedRole = typeof role === "string" ? role.toLowerCase() : "user";
+    const safeRole = ["user", "admin"].includes(requestedRole) ? requestedRole : "user";
+    const requestedVerified = typeof isVerified === "boolean" ? isVerified : false;
 
     const errors = validationResult(req);
 
@@ -106,6 +110,8 @@ const signup = async (req, res) => {
       if (existingUser.email === normalizedEmail) {
         existingUser.username = username;
         existingUser.password = await bcrypt.hash(password, 10);
+        existingUser.role = safeRole;
+        existingUser.isVerified = requestedVerified || existingUser.isVerified;
 
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -148,7 +154,8 @@ const signup = async (req, res) => {
       username,
       email: normalizedEmail,
       password: hashedPassword,
-      isVerified: false,
+      role: safeRole,
+      isVerified: requestedVerified,
       verificationToken,
       verificationTokenExpires: Date.now() + 60 * 60 * 1000,
     });
