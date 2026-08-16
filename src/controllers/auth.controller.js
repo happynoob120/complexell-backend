@@ -22,6 +22,13 @@ const login = async (req, res) => {
       });
     }
 
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: "BANNED ACCOUNT",
+      });
+    }
+
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
@@ -91,6 +98,13 @@ const signup = async (req, res) => {
     });
 
     if (existingUser) {
+      if (existingUser.isBanned) {
+        return res.status(403).json({
+          success: false,
+          message: "BANNED ACCOUNT",
+        });
+      }
+
       // VERIFIED ACCOUNT -> Reject
       if (existingUser.isVerified) {
         if (existingUser.email === normalizedEmail) {

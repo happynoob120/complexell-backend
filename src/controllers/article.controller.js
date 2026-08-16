@@ -195,7 +195,8 @@ const deleteArticle = async (req, res) => {
       });
     }
 
-    if (article.author.toString() !== req.user.id) {
+    const isAdmin = req.user?.role === "admin";
+    if (!isAdmin && article.author.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to delete this article.",
