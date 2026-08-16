@@ -38,7 +38,7 @@ const login = async (req, res) => {
       });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -54,6 +54,7 @@ const login = async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -237,7 +238,12 @@ const getCurrentUser = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -287,7 +293,7 @@ const verifyEmail = async (req, res) => {
 
     await user.save();
 
-    const authToken = generateToken(user._id);
+    const authToken = generateToken(user);
 
     res.cookie("token", authToken, {
       httpOnly: true,

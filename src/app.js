@@ -2,6 +2,7 @@ const express = require('express')
 const cookieParser = require('cookie-parser')
 const authRoutes = require('./routes/auth.routes')
 const articleRoutes = require('./routes/article.routes')
+const adminRoutes = require('./routes/admin.routes')
 const cors = require('cors')
 const path = require('path')
 
@@ -15,6 +16,7 @@ app.use(
 )
 app.use(express.json())
 app.use('/api/auth', authRoutes)
+app.use('/api/admin', adminRoutes)
 app.use('/api/articles', articleRoutes)
 
 // Serve the built frontend in production when the dist folder is available.
