@@ -8,10 +8,25 @@ const path = require('path')
 
 const app = express()
 app.use(cookieParser())
+// CORS: allow the configured client origin(s). In development allow localhost dev server origins.
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://complexell.souel.in',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 )
 app.use(express.json())

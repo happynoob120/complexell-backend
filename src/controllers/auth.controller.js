@@ -32,7 +32,8 @@ const login = async (req, res) => {
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
-        message: "Please verify your email first.",
+        message:
+          "Please verify your email first. Check your inbox and spam folder for the verification link.",
       });
     }
 
